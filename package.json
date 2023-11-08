@@ -1,0 +1,38 @@
+{
+  "name": "pooling-backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "prestart": "npm install",
+    "start": "forever server.js",
+    "watch": "forever -w server.js",
+    "stop": "forever stop server.js",
+    "lint": "eslint ."
+  },
+  "engines": {
+    "node": "11.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dimafdr/Polling.git"
+  },
+  "author": "Dimafdr",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Dimafdr/Polling/issues"
+  },
+  "homepage": "https://github.com/Dimafdr/Polling#readme",
+  "dependencies": {
+    "faker": "^5.5.3",
+    "forever": "^4.0.1",
+    "koa": "^2.13.1",
+    "koa-router": "^10.1.1",
+    "koa-static": "^5.0.0",
+    "nanoid": "^3.1.25"
+  },
+  "devDependencies": {
+    "eslint": "^7.32.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.24.1"
+  }
+}
