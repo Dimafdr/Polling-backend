@@ -14,4 +14,4 @@
 
 ## 11.1 Polling (Backend)
 
-### Описание задания во [Frontend](https://github.com/MKSInc/AHJ-hw.-11-RxJs.-1-Pooling-Frontend) части.
+### Описание задания во [Frontend](https://github.com/Dimafdr/Polling-frontend) части.
