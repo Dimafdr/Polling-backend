@@ -1,45 +1,93 @@
+const http = require('http');
 const path = require('path');
+const fs = require('fs');
 const Koa = require('koa');
+const koaBody = require('koa-body');
 const koaStatic = require('koa-static');
-const Router = require('koa-router');
-const MsgGenerator = require('./js/MsgGenerator');
+const { faker } = require('@faker-js/faker');
+const uuid = require('uuid');
+const app = new Koa();
 
-const app = new Koa();//
+const public = path.join(__dirname, '/public')
+app.use(koaStatic(public));
 
 app.use(async (ctx, next) => {
-  // Так как frontend на ходится на сервере, то CORS не нужен.
-  // ctx.response.set('Access-Control-Allow-Origin', 'http://localhost:8080');
+  const origin = ctx.request.get('Origin');
+  if (!origin) {
+    return await next();
+  }
 
-  // ajax (rxjs) отправляет запрос с заголовком 'X-Requested-With'.
-  // Нужно разрешать, если фронтенд на другом домене.
-  // ctx.response.set('Access-Control-Allow-Headers', 'X-Requested-With');
-  await next();
+  const headers = { 'Access-Control-Allow-Origin': '*', };
+
+  if (ctx.request.method !== 'OPTIONS') {
+    ctx.response.set({...headers});
+    try {
+      return await next();
+    } catch (e) {
+      e.headers = {...e.headers, ...headers};
+      throw e;
+    }
+  }
+
+  if (ctx.request.get('Access-Control-Request-Method')) {
+    ctx.response.set({
+      ...headers,
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH',
+    });
+
+    if (ctx.request.get('Access-Control-Request-Headers')) {
+      ctx.response.set('Access-Control-Allow-Headers', ctx.request.get('Access-Control-Request-Headers'));
+    }
+
+    ctx.response.status = 204;
+  }
 });
 
-const dirPublic = path.join(__dirname, 'public');
-app.use(koaStatic(dirPublic));
+app.use(koaBody({
+  text: true,
+  urlencoded: true,
+  multipart: true,
+  json: true,
+}));
 
+const Router = require('koa-router');
 const router = new Router();
-app.use(router.routes());
-app.use(router.allowedMethods());
 
-const msgGenerator = new MsgGenerator();
-msgGenerator.start();
+const messages = {
+  status: "ok",
+  timestamp: 1553400000,
+  messages: [
+    {
+      id: uuid.v4(),
+      from: "anya@ivanova",
+      subject: "Hello from Anya",
+      body: "Long message body here" ,
+      received: 1553108200
+    },
+    {
+      id: uuid.v4(),
+      from: "alex@petrov",
+      subject: "Hello from Alex Petrov!",
+      body: "Long message body here",
+      received: 1553107200
+    },
+  ]
+}
+function createRandomMessage() {
+  return {
+    id: uuid.v4(),
+    from: faker.internet.email(),
+    subject: `Hello from ${faker.internet.userName()}!`,
+    body: "Long message body here",
+    received: new Date(),
+  }
+}
+router.get('/api/messages', async (ctx, next) => {
+  messages.messages.push(createRandomMessage());
+  ctx.response.body = messages;
+});
 
-const getMessages = async (ctx) => {
-  const id = ctx.params.id ? ctx.params.id : '';
+app.use(router.routes()).use(router.allowedMethods());
 
-  ctx.response.body = JSON.stringify({
-    timestamp: Date.now(),
-    messages: msgGenerator.getLastMessages(id),
-    status: msgGenerator.isFinish ? 'finish' : 'ok',
-  });
-};
-
-router.get('/messages/unread', getMessages);
-
-router.get('/messages/unread/:id', getMessages);
-
-const PORT = process.env.PORT || 3000;
-// eslint-disable-next-line no-console
-app.listen(PORT, () => console.log(`Koa server has been started on port ${PORT} ...`));
+const port = process.env.PORT || 7070;
+const server = http.createServer(app.callback()).listen(port);
